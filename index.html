@@ -1,760 +1,738 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADM SMP - Official Server</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-            color: #ffffff;
-            overflow-x: hidden;
-        }
-
-        /* Maintenance Overlay */
-        .maintenance-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(45deg, #ff6b6b, #ff5252);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            animation: pulseMaintenance 2s infinite;
-        }
-
-        .maintenance-overlay.hidden {
-            display: none;
-        }
-
-        @keyframes pulseMaintenance {
-            0%, 100% { opacity: 0.9; }
-            50% { opacity: 1; }
-        }
-
-        /* Navigation */
-        .navbar {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: rgba(15, 15, 35, 0.95);
-            backdrop-filter: blur(20px);
-            z-index: 1000;
-            padding: 1rem 0;
-            transition: all 0.3s ease;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 2rem;
-        }
-
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
-
-        .nav-links a {
-            color: #ffffff;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .nav-links a:hover {
-            color: #00d4ff;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: -5px;
-            left: 0;
-            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
-            transition: width 0.3s ease;
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .hamburger {
-            display: none;
-            flex-direction: column;
-            cursor: pointer;
-        }
-
-        .hamburger span {
-            width: 25px;
-            height: 3px;
-            background: #ffffff;
-            margin: 3px 0;
-            transition: 0.3s;
-        }
-
-        /* Hero Section */
-        .hero {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%"><stop offset="0%" stop-color="%2300d4ff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ff6b6b" stop-opacity="0.05"/></radialGradient></defs><rect width="100%" height="100%" fill="url(%23a)"/></svg>');
-            animation: float 20s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-        }
-
-        .hero-content {
-            z-index: 2;
-            max-width: 800px;
-            padding: 0 2rem;
-            animation: fadeInUp 1s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .hero h1 {
-            font-size: 4rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(45deg, #00d4ff, #ff6b6b, #ffd93d);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1.2;
-        }
-
-        .hero p {
-            font-size: 1.3rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-            line-height: 1.6;
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #00d4ff, #0099cc);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.4);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            border: 2px solid #ff6b6b;
-            color: #ff6b6b;
-        }
-
-        .btn-secondary:hover {
-            background: #ff6b6b;
-            transform: translateY(-3px);
-        }
-
-        /* Server Status */
-        .status-section {
-            padding: 5rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .server-status {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            margin-bottom: 4rem;
-        }
-
-        .status-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 3rem;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .status-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #00d4ff, #ff6b6b, #ffd93d);
-        }
-
-        .status-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .status-indicator {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin: 0 auto 1.5rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 600;
-            position: relative;
-        }
-
-        .status-online {
-            background: linear-gradient(45deg, #00ff88, #00cc6a);
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
-            color: #000;
-        }
-
-        .status-offline {
-            background: linear-gradient(45deg, #ff6b6b, #ff5252);
-            box-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
-            color: #fff;
-        }
-
-        .status-maintenance {
-            background: linear-gradient(45deg, #ffd93d, #ffaa00);
-            box-shadow: 0 0 30px rgba(255, 217, 61, 0.5);
-            color: #000;
-        }
-
-        .status-dot {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            margin-bottom: 0.5rem;
-            animation: pulseDot 1.5s infinite;
-        }
-
-        .status-online .status-dot {
-            background: #00ff88;
-            box-shadow: 0 0 10px #00ff88;
-        }
-
-        .status-offline .status-dot {
-            background: #ff6b6b;
-            box-shadow: 0 0 10px #ff6b6b;
-        }
-
-        .status-maintenance .status-dot {
-            background: #ffd93d;
-            box-shadow: 0 0 10px #ffd93d;
-        }
-
-        @keyframes pulseDot {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(0, 255, 136, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
-        }
-
-        /* Features Section */
-        .features {
-            padding: 5rem 2rem;
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .feature-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 2.5rem;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
-        }
-
-        .feature-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
-            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-        }
-
-        /* Social Section */
-        .social-section {
-            padding: 5rem 2rem;
-            text-align: center;
-        }
-
-        .social-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .social-link {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .discord { background: linear-gradient(45deg, #5865f2, #4752c4); color: white; }
-        .twitter { background: linear-gradient(45deg, #1da1f2, #0d8bd9); color: white; }
-        .youtube { background: linear-gradient(45deg, #ff0000, #cc0000); color: white; }
-        .tiktok { background: linear-gradient(45deg, #000000, #333333); color: white; }
-
-        .social-link:hover {
-            transform: translateY(-5px) scale(1.1);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Footer */
-        .footer {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 2rem;
-            text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hamburger {
-                display: flex;
-            }
-
-            .nav-links {
-                position: fixed;
-                left: -100%;
-                top: 70px;
-                flex-direction: column;
-                background-color: rgba(15, 15, 35, 0.98);
-                width: 100%;
-                text-align: center;
-                transition: 0.3s;
-                padding: 2rem 0;
-            }
-
-            .nav-links.active {
-                left: 0;
-            }
-
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .btn {
-                width: 100%;
-                max-width: 300px;
-                justify-content: center;
-            }
-        }
-
-        /* Animations */
-        .copied {
-            animation: copiedAnim 0.5s ease-out;
-        }
-
-        @keyframes copiedAnim {
-            0% { background: #00ff88; transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECLIPSE • Minecraft</title>
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+}
+:root{
+    --purple:#8b5cf6;
+    --blue:#4f8cff;
+    --cyan:#54e6ff;
+}
+html{
+    scroll-behavior:smooth;
+}
+body{
+    min-height:100vh;
+    overflow-x:hidden;
+    color:white;
+    background:#03030a;
+}
+/* ================= BACKGROUND ================= */
+.space{
+    position:fixed;
+    inset:0;
+    overflow:hidden;
+    z-index:-10;
+    background:
+        radial-gradient(circle at 50% 35%,#21104b 0%,#090718 35%,#03030a 75%);
+}
+.stars,
+.stars2,
+.particles{
+    position:absolute;
+    inset:0;
+}
+.stars{
+    background-image:
+        radial-gradient(circle,#fff 1px,transparent 1px),
+        radial-gradient(circle,#9d8cff 1px,transparent 1px);
+    background-size:85px 85px,145px 145px;
+    animation:starMove 30s linear infinite;
+    opacity:.45;
+}
+.stars2{
+    background-image:
+        radial-gradient(circle,#fff 1px,transparent 1px);
+    background-size:43px 43px;
+    animation:starMove 15s linear infinite reverse;
+    opacity:.18;
+}
+@keyframes starMove{
+    from{transform:translateY(0)}
+    to{transform:translateY(85px)}
+}
+/* ================= ECLIPSE ================= */
+.eclipse{
+    position:absolute;
+    width:min(48vw,520px);
+    height:min(48vw,520px);
+    min-width:300px;
+    min-height:300px;
+    left:50%;
+    top:33%;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:
+        radial-gradient(circle at 45% 45%,
+        #020208 0 48%,
+        transparent 49%);
+    box-shadow:
+        0 0 25px #fff,
+        0 0 60px #8b5cf6,
+        0 0 130px #713cff,
+        0 0 230px #41209c;
+    animation:eclipsePulse 4s ease-in-out infinite;
+}
+.eclipse:before{
+    content:"";
+    position:absolute;
+    inset:-12px;
+    border-radius:50%;
+    border:5px solid #b9a4ff;
+    box-shadow:
+        0 0 25px #b9a4ff,
+        0 0 70px #8b5cf6,
+        0 0 130px #5b32d6;
+}
+.eclipse:after{
+    content:"";
+    position:absolute;
+    inset:-45px;
+    border-radius:50%;
+    border:1px solid #8b5cf6;
+    opacity:.35;
+    animation:ring 8s linear infinite;
+}
+@keyframes eclipsePulse{
+    0%,100%{
+        filter:brightness(.9);
+    }
+    50%{
+        filter:brightness(1.25);
+    }
+}
+@keyframes ring{
+    from{transform:rotate(0deg) scale(1)}
+    to{transform:rotate(360deg) scale(1.08)}
+}
+/* ================= FLOATING CUBES ================= */
+.cube{
+    position:absolute;
+    width:45px;
+    height:45px;
+    background:linear-gradient(135deg,#6541b9,#151027);
+    border:1px solid #9a7cff55;
+    box-shadow:0 0 25px #7651ff33;
+    transform:rotate(25deg);
+    animation:float 7s ease-in-out infinite;
+}
+.cube:nth-child(1){
+    left:8%;
+    top:25%;
+    animation-delay:-2s;
+}
+.cube:nth-child(2){
+    right:12%;
+    top:35%;
+    width:30px;
+    height:30px;
+    animation-delay:-5s;
+}
+.cube:nth-child(3){
+    left:18%;
+    bottom:15%;
+    width:25px;
+    height:25px;
+    animation-delay:-1s;
+}
+.cube:nth-child(4){
+    right:20%;
+    bottom:20%;
+    width:50px;
+    height:50px;
+    animation-delay:-4s;
+}
+@keyframes float{
+    0%,100%{
+        transform:translateY(0) rotate(25deg);
+    }
+    50%{
+        transform:translateY(-35px) rotate(70deg);
+    }
+}
+/* ================= PARTICLES ================= */
+.particle{
+    position:absolute;
+    width:3px;
+    height:3px;
+    border-radius:50%;
+    background:#b9a6ff;
+    box-shadow:0 0 10px #8b5cf6;
+    animation:particleFloat linear infinite;
+}
+@keyframes particleFloat{
+    from{
+        transform:translateY(110vh);
+        opacity:0;
+    }
+    20%{opacity:1}
+    80%{opacity:.8}
+    to{
+        transform:translateY(-20vh);
+        opacity:0;
+    }
+}
+/* ================= NAVBAR ================= */
+nav{
+    width:min(1150px,92%);
+    margin:22px auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 18px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(10,8,22,.52);
+    backdrop-filter:blur(22px);
+    border-radius:18px;
+    position:relative;
+    z-index:20;
+}
+.logo{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    font-weight:900;
+    letter-spacing:2px;
+}
+.logoIcon{
+    width:39px;
+    height:39px;
+    display:grid;
+    place-items:center;
+    border-radius:12px;
+    background:linear-gradient(135deg,#9b72ff,#3c6cff);
+    box-shadow:
+        0 0 20px #714dff99;
+}
+.status{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    color:#a7ffbd;
+}
+.statusDot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#46ff83;
+    box-shadow:0 0 14px #46ff83;
+}
+/* ================= HERO ================= */
+.hero{
+    min-height:780px;
+    width:min(1100px,92%);
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    position:relative;
+}
+.heroContent{
+    margin-top:150px;
+    z-index:5;
+}
+.tag{
+    display:inline-block;
+    padding:8px 15px;
+    margin-bottom:24px;
+    border-radius:50px;
+    background:#8b5cf61c;
+    border:1px solid #9d7aff55;
+    color:#cfc1ff;
+    font-size:12px;
+    letter-spacing:2px;
+}
+h1{
+    font-size:clamp(70px,14vw,155px);
+    line-height:.8;
+    letter-spacing:-8px;
+    font-weight:1000;
+    background:linear-gradient(
+        120deg,
+        white,
+        #b99cff 35%,
+        #5fa9ff 70%,
+        white
+    );
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    color:transparent;
+    animation:titleShine 5s linear infinite;
+}
+@keyframes titleShine{
+    to{background-position:200% center}
+}
+.subtitle{
+    max-width:650px;
+    margin:30px auto;
+    color:#aaa8bd;
+    font-size:17px;
+    line-height:1.7;
+}
+/* ================= SERVER CARD ================= */
+.serverCard{
+    width:min(720px,95%);
+    margin:35px auto;
+    padding:25px;
+    border-radius:26px;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.10),
+            rgba(255,255,255,.035)
+        );
+    border:1px solid rgba(255,255,255,.14);
+    backdrop-filter:blur(25px);
+    box-shadow:
+        0 30px 100px #0008,
+        inset 0 1px rgba(255,255,255,.12);
+    transition:.4s;
+}
+.serverCard:hover{
+    transform:translateY(-8px) scale(1.015);
+    border-color:#9d7aff66;
+    box-shadow:
+        0 35px 100px #0009,
+        0 0 50px #744bff22,
+        inset 0 1px rgba(255,255,255,.15);
+}
+.infoGrid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+}
+.info{
+    padding:17px;
+    background:#0000002e;
+    border:1px solid #ffffff0b;
+    border-radius:16px;
+}
+.info small{
+    display:block;
+    color:#77768a;
+    font-size:10px;
+    margin-bottom:8px;
+    letter-spacing:1px;
+}
+.info strong{
+    font-size:14px;
+}
+.online{
+    color:#54ff91;
+}
+.ip{
+    color:#b99cff;
+    cursor:pointer;
+}
+/* ================= ACTIONS ================= */
+.actions{
+    display:grid;
+    grid-template-columns:1.1fr 1fr 1fr;
+    gap:12px;
+    width:min(720px,95%);
+    margin:20px auto;
+}
+.btn{
+    min-height:58px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    text-decoration:none;
+    color:white;
+    border-radius:15px;
+    font-weight:800;
+    font-size:13px;
+    border:1px solid #ffffff14;
+    transition:.25s;
+}
+.btn:hover{
+    transform:translateY(-4px);
+    filter:brightness(1.15);
+}
+.copy{
+    background:linear-gradient(135deg,#8b5cf6,#6240dc);
+    box-shadow:0 10px 35px #7549ff40;
+}
+.discord{
+    background:linear-gradient(135deg,#5865f2,#424ec2);
+    box-shadow:0 10px 35px #5865f240;
+}
+.aternos{
+    background:linear-gradient(135deg,#242435,#151522);
+}
+/* ================= MUSIC ================= */
+.music{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    z-index:100;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 14px;
+    background:#0d0b18cc;
+    border:1px solid #ffffff15;
+    backdrop-filter:blur(20px);
+    border-radius:18px;
+    box-shadow:0 15px 50px #0008;
+}
+.music button{
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,#8b5cf6,#536dff);
+    color:white;
+    cursor:pointer;
+    font-size:16px;
+}
+.visualizer{
+    display:flex;
+    align-items:center;
+    gap:3px;
+    height:30px;
+}
+.bar{
+    width:3px;
+    height:8px;
+    background:#9c80ff;
+    border-radius:10px;
+    animation:equalizer .7s ease-in-out infinite alternate;
+}
+.bar:nth-child(2){animation-delay:.1s}
+.bar:nth-child(3){animation-delay:.2s}
+.bar:nth-child(4){animation-delay:.3s}
+.bar:nth-child(5){animation-delay:.4s}
+.bar:nth-child(6){animation-delay:.2s}
+.music.paused .bar{
+    animation-play-state:paused;
+}
+@keyframes equalizer{
+    from{height:5px}
+    to{height:27px}
+}
+/* ================= SECTION ================= */
+.section{
+    width:min(950px,92%);
+    margin:100px auto;
+    text-align:center;
+}
+.section h2{
+    font-size:35px;
+    margin-bottom:12px;
+}
+.section p{
+    color:#858397;
+}
+.features{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-top:35px;
+}
+.feature{
+    padding:28px 20px;
+    border-radius:22px;
+    background:#ffffff08;
+    border:1px solid #ffffff0d;
+    transition:.3s;
+}
+.feature:hover{
+    transform:translateY(-6px);
+    background:#ffffff0d;
+}
+.featureIcon{
+    font-size:30px;
+    margin-bottom:15px;
+}
+.feature h3{
+    margin-bottom:8px;
+}
+.feature p{
+    font-size:13px;
+    line-height:1.5;
+}
+/* ================= FOOTER ================= */
+footer{
+    padding:60px 20px 35px;
+    text-align:center;
+    color:#656476;
+    font-size:12px;
+}
+footer span{
+    color:#9b83e8;
+}
+/* ================= TOAST ================= */
+.toast{
+    position:fixed;
+    left:50%;
+    bottom:30px;
+    transform:translate(-50%,100px);
+    padding:13px 20px;
+    border-radius:13px;
+    background:#171426ee;
+    border:1px solid #ffffff18;
+    backdrop-filter:blur(20px);
+    color:white;
+    font-size:13px;
+    opacity:0;
+    transition:.35s;
+    z-index:200;
+}
+.toast.show{
+    transform:translate(-50%,0);
+    opacity:1;
+}
+/* ================= MOBILE ================= */
+@media(max-width:700px){
+    .status{
+        display:none;
+    }
+    .hero{
+        min-height:720px;
+    }
+    .heroContent{
+        margin-top:180px;
+    }
+    h1{
+        letter-spacing:-4px;
+    }
+    .infoGrid{
+        grid-template-columns:1fr;
+    }
+    .actions{
+        grid-template-columns:1fr;
+    }
+    .features{
+        grid-template-columns:1fr;
+    }
+    .eclipse{
+        top:28%;
+    }
+}
+</style>
 </head>
 <body>
-    <!-- Maintenance Overlay -->
-    <div id="maintenanceOverlay" class="maintenance-overlay hidden">
-        <i class="fas fa-tools" style="font-size: 4rem; margin-bottom: 1rem; color: #ffd93d;"></i>
-        <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">SERVER MAINTENANCE</h1>
-        <p style="font-size: 1.2rem; max-width: 500px;">We're performing scheduled maintenance. Server will be back online soon!</p>
+<!-- BACKGROUND -->
+<div class="space">
+    <div class="stars"></div>
+    <div class="stars2"></div>
+    <div class="eclipse"></div>
+    <div class="cube"></div>
+    <div class="cube"></div>
+    <div class="cube"></div>
+    <div class="cube"></div>
+    <div class="particles" id="particles"></div>
+</div>
+<!-- NAV -->
+<nav>
+    <div class="logo">
+        <div class="logoIcon">☾</div>
+        ECLIPSE
     </div>
-
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">ADM SMP</div>
-            <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#status">Status</a></li>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#discord">Discord</a></li>
-                <li><a href="MEDAI.html">Med Ai</a></li>
-                <li><a href="Ekaki.html">Ekaki</a></li>
-            </ul>
-            <div class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
+    <div class="status">
+        <span class="statusDot"></span>
+        SERVER ONLINE
+    </div>
+</nav>
+<!-- HERO -->
+<section class="hero">
+    <div class="heroContent">
+        <div class="tag">
+            ✦ MINECRAFT SURVIVAL EXPERIENCE
+        </div>
+        <h1>ECLIPSE</h1>
+        <p class="subtitle">
+            A new world is waiting beyond the darkness.
+            Build your empire, explore the unknown and
+            write your own story.
+        </p>
+        <!-- SERVER CARD -->
+        <div class="serverCard">
+            <div class="infoGrid">
+                <div class="info">
+                    <small>SERVER IP</small>
+                    <strong class="ip" onclick="copyIP()">
+                        akira1.qzz.io
+                    </strong>
+                </div>
+                <div class="info">
+                    <small>VERSION</small>
+                    <strong>1.21.11</strong>
+                </div>
+                <div class="info">
+                    <small>STATUS</small>
+                    <strong class="online">
+                        ● ONLINE
+                    </strong>
+                </div>
             </div>
         </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="hero-content">
-            <h1>ADM SMP</h1>
-            <p>Join our ultimate survival experience with custom plugins, active staff, and a thriving community. Play now and build your legacy!</p>
-            <div class="cta-buttons">
-                <a href="#status" class="btn btn-primary">
-                    <i class="fas fa-play"></i>
-                    Play Now
-                </a>
-                <a href="https://discord.gg/xQRbfZUtuC" target="_blank" class="btn btn-secondary">
-                    <i class="fab fa-discord"></i>
-                    Join Discord
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Server Status -->
-    <section id="status" class="status-section">
-        <h2 class="section-title">Live Server Status</h2>
-        <div class="server-status">
-            <div class="status-card fade-in" id="javaStatus">
-                <div class="status-indicator" id="javaIndicator">
-                    <div class="status-dot"></div>
-                    <div id="javaStatusText">Loading...</div>
-                </div>
-                <h3 id="javaTitle">Java Edition</h3>
-                <div class="server-ip" id="javaIP" style="font-size: 1.8rem; font-weight: 700; margin: 1rem 0; word-break: break-all; cursor: pointer; color: #00d4ff;" onclick="copyIP('practice-shoe.gl.joinmc.link')">
-                    practice-shoe.gl.joinmc.link
-                </div>
-                <div style="font-size: 1.2rem; opacity: 0.8;">
-                    <span id="javaPlayers">0</span>/Currently Shutdown till August 2026
-                </div>
-                <div id="javaMotd" style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;"></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features -->
-    <section id="features" class="features">
-        <h2 class="section-title">Server Features</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-crown"></i>
-                </div>
-                <h3>Custom Plugins</h3>
-                <p>Unique gameplay with exclusive plugins designed for the best SMP experience.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <h3>Active Community</h3>
-                <p>Thrive in our friendly community with daily events and player interaction.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon" style="background: linear-gradient(45deg, #ffd93d, #ffaa00);">
-                    <i class="fas fa-tools"></i>
-                </div>
-                <h3>Smart Maintenance</h3>
-                <p>Scheduled maintenance with live status updates and minimal downtime.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <h3>24/7 Protection</h3>
-                <p>Advanced anti-grief and security systems keep your builds safe.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-trophy"></i>
-                </div>
-                <h3>Weekly Events</h3>
-                <p>Join exciting competitions and events with great rewards.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-headset"></i>
-                </div>
-                <h3>Active Staff</h3>
-                <p>Dedicated team available 24/7 to help you.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Social Section -->
-    <section id="discord" class="social-section">
-        <h2 class="section-title">Join Our Community</h2>
-        <p style="font-size: 1.2rem; margin-bottom: 2rem;">Connect with thousands of players!</p>
-        <div class="social-links">
-            <a href="https://discord.gg/xQRbfZUtuC" class="social-link discord" target="_blank">
-                <i class="fab fa-discord"></i>
+        <!-- ACTIONS -->
+        <div class="actions">
+            <a
+                class="btn copy"
+                href="javascript:void(0)"
+                onclick="copyIP()"
+            >
+                📋 COPY IP
             </a>
-            </
+            <a
+                class="btn discord"
+                href="https://discord.gg/wy9VeNkhaf"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                💬 DISCORD
+            </a>
+            <a
+                class="btn aternos"
+                href="https://aternos.org/go/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                ⚡ ATERNOS
+            </a>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2026 ADM SMP. All rights reserved. | Made with ❤️ for the community</p>
-    </footer>
-
-    <script>
-        // Configuration
-        const SERVER_CONFIG = {
-            java: {
-                ip: 'practice-shoe.gl.joinmc.link',
-                port: 25565,
-                maxPlayers: 20
-            },
-            maintenance: false // Set to true for maintenance mode
-        };
-
-        // Mobile Navigation
-        const hamburger = document.querySelector('.hamburger');
-        const navLinks = document.querySelector('.nav-links');
-
-        hamburger.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
-
-        // Navbar scroll effect
-        window.addEventListener('scroll', () => {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 100) {
-                navbar.style.background = 'rgba(15, 15, 35, 0.98)';
-            } else {
-                navbar.style.background = 'rgba(15, 15, 35, 0.95)';
-            }
-        });
-
-        // Smooth scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-                navLinks.classList.remove('active');
-            });
-        });
-
-        // Copy IP function
-        function copyIP(ip) {
-            navigator.clipboard.writeText(ip).then(() => {
-                const element = event.target;
-                const originalText = element.textContent;
-                element.textContent = 'Copied!';
-                element.style.color = '#00ff88';
-                element.classList.add('copied');
-                setTimeout(() => {
-                    element.textContent = originalText;
-                    element.style.color = '#00d4ff';
-                    element.classList.remove('copied');
-                }, 2000);
-            });
-        }
-
-        // Live Server Status Checker
-        async function checkServerStatus() {
-            const javaStatusCard = document.getElementById('javaStatus');
-            const javaIndicator = document.getElementById('javaIndicator');
-            const javaStatusText = document.getElementById('javaStatusText');
-            const javaPlayers = document.getElementById('javaPlayers');
-            const javaMotd = document.getElementById('javaMotd');
-            const javaTitle = document.getElementById('javaTitle');
-
-            // Check maintenance first
-            if (SERVER_CONFIG.maintenance) {
-                javaStatusCard.classList.remove('fade-in');
-                javaIndicator.className = 'status-indicator status-maintenance';
-                javaStatusText.textContent = 'MAINTENANCE';
-                javaTitle.textContent = 'Java Edition (Maintenance)';
-                javaPlayers.parentElement.style.display = 'none';
-                javaMotd.textContent = 'Server is under maintenance. Join Discord for updates!';
-                showMaintenanceOverlay(true);
-                return;
-            }
-
-            showMaintenanceOverlay(false);
-
-            try {
-                // Using mcapi.us for server status (free public API)
-                const response = await fetch(`https://mcapi.us/server/status?ip=${SERVER_CONFIG.java.ip}&port=${SERVER_CONFIG.java.port}`);
-                const data = await response.json();
-
-                if (data.online) {
-                    javaStatusCard.classList.add('fade-in');
-                    javaIndicator.className = 'status-indicator status-online';
-                    javaStatusText.textContent = 'ONLINE';
-                    javaPlayers.textContent = data.players.now;
-                    javaMotd.textContent = data.motd.clean[0] || 'Welcome to ADM SMP!';
-                } else {
-                    javaStatusCard.classList.remove('fade-in');
-                    javaIndicator.className = 'status-indicator status-offline';
-                    javaStatusText.textContent = 'OFFLINE';
-                    javaPlayers.textContent = '0';
-                    javaMotd.textContent = 'Server is currently offline. Check back soon!';
-                }
-            } catch (error) {
-                console.error('Server status check failed:', error);
-                javaStatusCard.classList.remove('fade-in');
-                javaIndicator.className = 'status-indicator status-offline';
-                javaStatusText.textContent = 'OFFLINE';
-                javaPlayers.textContent = '0';
-                javaMotd.textContent = 'Cannot connect to status API. Server may be offline.';
-            }
-        }
-
-        // Maintenance Overlay Control
-        function showMaintenanceOverlay(show) {
-            const overlay = document.getElementById('maintenanceOverlay');
-            if (show) {
-                overlay.classList.remove('hidden');
-            } else {
-                overlay.classList.add('hidden');
-            }
-        }
-
-        // Initialize
-        checkServerStatus();
-        setInterval(checkServerStatus, 30000); // Update every 30 seconds
-
-        // Initial load animation
-        window.addEventListener('load', () => {
-            document.body.style.opacity = '0';
-            document.body.style.transition = 'opacity 0.5s ease';
-            setTimeout(() => {
-                document.body.style.opacity = '1';
-            }, 100);
-        });
-    </script>
+    </div>
+</section>
+<!-- FEATURES -->
+<section class="section">
+    <h2>ENTER THE ECLIPSE</h2>
+    <p>
+        Everything you need to join the adventure.
+    </p>
+    <div class="features">
+        <div class="feature">
+            <div class="featureIcon">🌎</div>
+            <h3>Explore</h3>
+            <p>
+                Discover a world filled with places
+                waiting to be explored.
+            </p>
+        </div>
+        <div class="feature">
+            <div class="featureIcon">⚔️</div>
+            <h3>Survive</h3>
+            <p>
+                Gather resources, build your base
+                and survive the night.
+            </p>
+        </div>
+        <div class="feature">
+            <div class="featureIcon">🏰</div>
+            <h3>Build</h3>
+            <p>
+                Create your own kingdom and leave
+                your mark on Eclipse.
+            </p>
+        </div>
+    </div>
+</section>
+<!-- MUSIC -->
+<audio id="bgm" loop>
+    <source src="bgm.mp3" type="audio/mpeg">
+</audio>
+<div class="music" id="musicBox">
+    <button onclick="toggleMusic()" id="musicButton">
+        ▶
+    </button>
+    <div class="visualizer">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+    <span style="font-size:12px;color:#aaa">
+        ECLIPSE BGM
+    </span>
+</div>
+<!-- FOOTER -->
+<footer>
+    ECLIPSE MINECRAFT SERVER
+    <br><br>
+    <span>akira1.qzz.io</span>
+    <br><br>
+    eclipse.nexus@outlook.com
+    <br><br>
+    © 2026 Eclipse. All rights reserved.
+</footer>
+<div class="toast" id="toast">
+    Server IP copied!
+</div>
+<script>
+/* ================= PARTICLES ================= */
+const particleContainer =
+    document.getElementById("particles");
+for(let i = 0; i < 70; i++){
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.left =
+        Math.random() * 100 + "%";
+    p.style.animationDuration =
+        (8 + Math.random() * 14) + "s";
+    p.style.animationDelay =
+        (-Math.random() * 15) + "s";
+    p.style.opacity =
+        Math.random();
+    particleContainer.appendChild(p);
+}
+/* ================= COPY IP ================= */
+function copyIP(){
+    navigator.clipboard.writeText(
+        "akira1.qzz.io"
+    );
+    const toast =
+        document.getElementById("toast");
+    toast.classList.add("show");
+    setTimeout(()=>{
+        toast.classList.remove("show");
+    },2200);
+}
+/* ================= MUSIC ================= */
+const bgm =
+    document.getElementById("bgm");
+const musicBox =
+    document.getElementById("musicBox");
+const musicButton =
+    document.getElementById("musicButton");
+function toggleMusic(){
+    if(bgm.paused){
+        bgm.play();
+        musicButton.innerHTML = "⏸";
+        musicBox.classList.remove("paused");
+    }else{
+        bgm.pause();
+        musicButton.innerHTML = "▶";
+        musicBox.classList.add("paused");
+    }
+}
+/* ================= MOUSE PARALLAX ================= */
+document.addEventListener("mousemove",(e)=>{
+    const x =
+        (e.clientX / window.innerWidth - .5);
+    const y =
+        (e.clientY / window.innerHeight - .5);
+    const eclipse =
+        document.querySelector(".eclipse");
+    eclipse.style.marginLeft =
+        x * 18 + "px";
+    eclipse.style.marginTop =
+        y * 18 + "px";
+});
+</script>
 </body>
 </html>

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECLIPSE - Minecraft Survival Experience</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #08070d;
+            --card-bg: rgba(22, 19, 38, 0.75);
+            --border-glow: rgba(138, 75, 255, 0.35);
+            --primary-purple: #8a4bff;
+            --accent-cyan: #00f2fe;
+            --text-main: #f0f0f5;
+            --text-muted: #9ba1b8;
+            --status-green: #00ff88;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Dynamic Animated Canvas Background */
+        #bgCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* Grid Overlay Effect */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: 
+                linear-gradient(rgba(138, 75, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(138, 75, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Ambient Glow Backgrounds */
+        .bg-glow-1 {
+            position: absolute;
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(138, 75, 255, 0.25) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            top: 40%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.12) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Navbar */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 8%;
+            backdrop-filter: blur(12px);
+            background: rgba(8, 7, 13, 0.75);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #fff 30%, var(--primary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-icon {
+            color: var(--primary-purple);
+            -webkit-text-fill-color: initial;
+            font-size: 1.2rem;
+            filter: drop-shadow(0 0 8px var(--primary-purple));
+        }
+
+        .server-status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--status-green);
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--status-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--status-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 5rem 8% 4rem;
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .tagline-badge {
+            display: inline-block;
+            background: rgba(138, 75, 255, 0.15);
+            border: 1px solid rgba(138, 75, 255, 0.4);
+            color: #c4a1ff;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4.5rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            line-height: 1.1;
+            margin-bottom: 1.2rem;
+            background: linear-gradient(180deg, #ffffff 0%, #b3a5d9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(138, 75, 255, 0.3);
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        /* Server Specs Card */
+        .specs-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .spec-item {
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .spec-item small {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .spec-item strong {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.25rem;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        /* CTA Buttons */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-purple), #622ad2);
+            color: #fff;
+            box-shadow: 0 8px 25px rgba(138, 75, 255, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(138, 75, 255, 0.6);
+        }
+
+        .btn-discord {
+            background: #5865F2;
+            color: #fff;
+            box-shadow: 0 8px 25px rgba(88, 101, 242, 0.3);
+        }
+
+        .btn-discord:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(88, 101, 242, 0.5);
+            background: #4752c4;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-3px);
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 5rem 8%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 2.2rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.2rem;
+            display: inline-block;
+        }
+
+        .feature-card h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+            color: #fff;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* BGM Player Floating Box */
+        .bgm-widget {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(16, 14, 28, 0.9);
+            border: 1px solid var(--border-glow);
+            backdrop-filter: blur(12px);
+            padding: 10px 18px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            z-index: 99;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .bgm-widget:hover {
+            transform: scale(1.03);
+        }
+
+        .music-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 16px;
+        }
+
+        .bar {
+            width: 3px;
+            background-color: var(--primary-purple);
+            border-radius: 2px;
+            animation: bounce 1.2s infinite ease-in-out;
+        }
+
+        .bar:nth-child(1) { height: 60%; animation-delay: 0.1s; }
+        .bar:nth-child(2) { height: 100%; animation-delay: 0.3s; }
+        .bar:nth-child(3) { height: 40%; animation-delay: 0.2s; }
+        .bar:nth-child(4) { height: 80%; animation-delay: 0.4s; }
+
+        .paused .bar {
+            animation: none !important;
+            height: 4px !important;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1); }
+        }
+
+        .bgm-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--text-main);
+        }
+
+        /* Toast Popup */
+        .toast {
+            position: fixed;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00ff88;
+            color: #000;
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: 0 10px 20px rgba(0,255,136,0.3);
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            bottom: 2rem;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 3rem 8%;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+
+        footer a {
+            color: var(--primary-purple);
+            text-decoration: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.8rem; }
+            .specs-card { grid-template-columns: 1fr; gap: 1rem; }
+            .action-buttons { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+            .bgm-widget { bottom: 1rem; right: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Dynamic Animated Starfield & Particles Background Canvas -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Subtle Grid Effect -->
+    <div class="grid-overlay"></div>
+
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">
+            <span class="logo-icon">☾</span> ECLIPSE
+        </div>
+        <div class="server-status-pill">
+            <span class="status-dot"></span>
+            SERVER ONLINE
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="tagline-badge">✦ Minecraft Survival Experience</div>
+        <h1>ECLIPSE</h1>
+        <p>A new world is waiting beyond the darkness. Build your empire, explore the unknown, and write your own story with our community.</p>
+
+        <!-- Specs Card -->
+        <div class="specs-card">
+            <div class="spec-item">
+                <small>SERVER IP</small>
+                <strong>akira1.qzz.io</strong>
+            </div>
+            <div class="spec-item">
+                <small>VERSION</small>
+                <strong>1.21.11</strong>
+            </div>
+            <div class="spec-item">
+                <small>STATUS</small>
+                <strong style="color: var(--status-green);">● ONLINE</strong>
+            </div>
+        </div>
+
+        <!-- Call to Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="copyIp('akira1.qzz.io')">
+                📋 COPY IP
+            </button>
+            <a href="https://discord.gg/wy9VeNkhaf" target="_blank" rel="noopener noreferrer" class="btn btn-discord">
+                💬 DISCORD
+            </a>
+            <a href="https://aternos.org/go/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                ⚡ ATERNOS
+            </a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="section-header">
+            <h2>ENTER THE ECLIPSE</h2>
+            <p>Everything you need to join the ultimate survival adventure.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🌎</div>
+                <h3>Explore</h3>
+                <p>Discover a vast, vibrant world filled with secret biomes and custom terrain waiting to be explored.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚔️</div>
+                <h3>Survive</h3>
+                <p>Gather rare resources, build powerful gear, and fight off the perils of the night together.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏰</div>
+                <h3>Build</h3>
+                <p>Construct massive kingdoms, establish player shops, and leave your permanent mark on Eclipse.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Background Music Audio Control -->
+    <audio id="bgmAudio" loop src="bgm.mp3"></audio>
+    <div class="bgm-widget paused" id="bgmToggle" onclick="toggleAudio()">
+        <div class="music-bars">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <span class="bgm-title">ECLIPSE BGM</span>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast">Server IP copied to clipboard!</div>
+
+    <!-- Footer -->
+    <footer>
+        <p>ECLIPSE MINECRAFT SERVER</p>
+        <p style="margin: 0.8rem 0;">Contact: <a href="mailto:eclipse.nexus@outlook.com">eclipse.nexus@outlook.com</a></p>
+        <p style="opacity: 0.5; font-size: 0.8rem;">© 2026 Eclipse. All rights reserved.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        /* Interactive Star & Particle Background Animation */
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const particles = [];
+        const particleCount = 80;
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 2 + 0.5,
+                color: Math.random() > 0.5 ? 'rgba(138, 75, 255, ' : 'rgba(0, 242, 254, ',
+                alpha: Math.random(),
+                speedY: -(Math.random() * 0.4 + 0.1),
+                speedX: (Math.random() - 0.5) * 0.2
+            });
+        }
+
+        function animateBackground() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.y += p.speedY;
+                p.x += p.speedX;
+
+                if (p.y < 0) {
+                    p.y = canvas.height;
+                    p.x = Math.random() * canvas.width;
+                }
+                if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color + p.alpha + ')';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = p.color + '1)';
+                ctx.fill();
+            });
+
+            requestAnimationFrame(animateBackground);
+        }
+        animateBackground();
+
+        /* Utility Functions */
+        function copyIp(ip) {
+            navigator.clipboard.writeText(ip).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            });
+        }
+
+        function toggleAudio() {
+            const audio = document.getElementById('bgmAudio');
+            const widget = document.getElementById('bgmToggle');
+            
+            if (audio.paused) {
+                audio.play();
+                widget.classList.remove('paused');
+            } else {
+                audio.pause();
+                widget.classList.add('paused');
+            }
+        }
+    </script>
+</body>
+</html>

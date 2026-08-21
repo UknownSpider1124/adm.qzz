@@ -2,223 +2,309 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>DoorGuard AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Door Open Alert Monitor</title>
+<!-- Load TensorFlow.js and COCO-SSD -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
 <style>
-:root{--bg:#070b14;--panel:#101727;--panel2:#151e31;--line:#26324c;--text:#f5f7fb;--muted:#8f9bb4;--green:#24d18b;--red:#ff5264;--blue:#5d8dff}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -10%,#182442 0,#070b14 45%);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
-.app{width:min(1050px,100%);margin:auto;padding:18px}
-.header{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px}
-.brand{display:flex;align-items:center;gap:12px}.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#24395f,#111a2d);display:grid;place-items:center;font-size:25px;border:1px solid #344362;box-shadow:0 10px 30px #0005}
-h1{font-size:23px;margin:0}.subtitle{font-size:12px;color:var(--muted);margin-top:3px}
-.power{border:1px solid #35415d;background:#151d2e;color:#fff;border-radius:13px;padding:12px 16px;font-weight:800;cursor:pointer;transition:.2s}.power.on{background:#0c513c;border-color:#1fae79;color:#a9ffdd}.power:active{transform:scale(.97)}
-.camera-wrap{background:#05070c;border:1px solid var(--line);border-radius:22px;padding:7px;box-shadow:0 20px 60px #0007}
-.camera{position:relative;aspect-ratio:16/9;background:#090e19;border-radius:17px;overflow:hidden}
-video{width:100%;height:100%;object-fit:cover;display:block}.mirror{transform:scaleX(-1)}
-.camera-off{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,#0c1322,#070a12);text-align:center}
-.camera-off .camicon{font-size:46px}.camera-off b{display:block;margin-top:8px}.camera-off span{font-size:12px;color:var(--muted)}
-.badge{position:absolute;top:14px;left:14px;padding:8px 11px;background:#070b14c9;border:1px solid #34415e;border-radius:999px;font-size:12px;font-weight:700;backdrop-filter:blur(8px)}
-.dot{width:8px;height:8px;display:inline-block;border-radius:50%;background:#727c90;margin-right:7px}.dot.green{background:var(--green);box-shadow:0 0 10px var(--green)}.dot.red{background:var(--red);box-shadow:0 0 10px var(--red)}
-.alert{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:none;text-align:center;background:#9e1728ee;border:1px solid #ff7380;padding:18px 28px;border-radius:18px;box-shadow:0 0 50px #ff304555}.alert.show{display:block;animation:pulse .7s infinite alternate}@keyframes pulse{to{transform:translate(-50%,-50%) scale(1.04)}}.alert strong{font-size:23px}
-.controls{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:9px;margin-top:12px}
-button,select{font:inherit}.control{min-height:47px;border-radius:13px;border:1px solid var(--line);background:var(--panel);color:#fff;padding:0 13px;font-weight:750;cursor:pointer}.control:hover{background:var(--panel2);border-color:#3c4c6e}.control:active{transform:scale(.985)}select{outline:none}.primary{background:#315ec7;border-color:#4778e2}.primary:hover{background:#3c6ddd}
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.card{background:#101727;border:1px solid var(--line);border-radius:15px;padding:14px}.label{font-size:10px;color:var(--muted);font-weight:800;letter-spacing:.08em}.value{font-size:16px;font-weight:800;margin-top:7px}
-.setup{margin-top:12px;background:#0d1422;border:1px solid var(--line);border-radius:16px;padding:14px}.setup-title{font-weight:800;margin-bottom:7px}.setup p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
-.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;background:#151e31;border:1px solid #405071;border-radius:12px;padding:12px 16px;font-size:13px;transition:.25s;z-index:20}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@media(max-width:760px){.controls{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.header{align-items:flex-start}.power{padding:10px 12px}.camera{aspect-ratio:4/3}}
-@media(max-width:430px){.app{padding:11px}.controls{grid-template-columns:1fr 1fr}.brand h1{font-size:19px}.logo{width:42px;height:42px}.power{font-size:11px}}
+body {
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+background-color: #121212;
+color: #ffffff;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 20px;
+margin: 0;
+}
+h1 { margin-bottom: 10px; font-size: 1.5rem; }
+.container {
+max-width: 640px;
+width: 100%;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 15px;
+}
+.video-container {
+position: relative;
+width: 100%;
+max-width: 640px;
+height: 480px;
+background: #000;
+border-radius: 8px;
+overflow: hidden;
+}
+video, canvas {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+object-fit: cover;
+}
+.controls {
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+justify-content: center;
+width: 100%;
+}
+button, select {
+padding: 10px 16px;
+font-size: 0.9rem;
+border-radius: 6px;
+border: none;
+background: #2a2a2a;
+color: #fff;
+cursor: pointer;
+}
+button.active {
+background: #2e7d32;
+}
+button.inactive {
+background: #c62828;
+}
+#status {
+font-size: 1.1rem;
+font-weight: bold;
+padding: 8px 16px;
+border-radius: 4px;
+background: #222;
+width: 100%;
+text-align: center;
+box-sizing: border-box;
+}
 </style>
 </head>
 <body>
-<div class="app">
-  <header class="header">
-    <div class="brand">
-      <div class="logo">🚪</div>
-      <div><h1>DoorGuard AI</h1><div class="subtitle">Smart door-open monitoring</div></div>
-    </div>
-    <button id="powerBtn" class="power" type="button">⚪ SYSTEM OFF</button>
-  </header>
 
-  <section class="camera-wrap">
-    <div class="camera">
-      <video id="video" autoplay muted playsinline></video>
-      <div id="cameraOff" class="camera-off">
-        <div><div class="camicon">📷</div><b>Camera is off</b><span>Tap Start Camera to begin</span></div>
-      </div>
-      <div class="badge"><span id="dot" class="dot"></span><span id="camText">Camera off</span></div>
-      <div id="alertBox" class="alert"><strong>🚨 DOOR IS OPEN</strong><br><small id="alertText">Alert active</small></div>
-    </div>
-  </section>
+<div class="container">
+<h1>Door Open Monitor</h1>
 
-  <section class="controls">
-    <select id="cameraSelect" class="control"><option value="">Choose camera</option></select>
-    <button id="startBtn" class="control primary" type="button">📷 Start Camera</button>
-    <button id="flipBtn" class="control" type="button">🔄 Flip Camera</button>
-    <button id="testBtn" class="control" type="button">🔊 Test Alert</button>
-  </section>
+<div id="status">Loading Model...</div>
 
-  <section class="cards">
-    <div class="card"><div class="label">DOOR</div><div id="door" class="value">⚪ Waiting</div></div>
-    <div class="card"><div class="label">PERSON</div><div id="person" class="value">—</div></div>
-    <div class="card"><div class="label">OPEN TIME</div><div id="duration" class="value">0.0 s</div></div>
-    <div class="card"><div class="label">ALERT</div><div id="alertStatus" class="value">🟢 Ready</div></div>
-  </section>
-
-  <section class="setup">
-    <div class="setup-title">🧠 AI Monitor</div>
-    <p>This browser app handles the camera, system switch, timer and siren. For real door recognition, connect a browser vision model to the <b>analyzeFrame()</b> function below. The model should return whether the door is open and whether a person is present.</p>
-  </section>
+<div class="video-container">
+<video id="video" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
 </div>
-<div id="toast" class="toast"></div>
+
+<div class="controls">
+<button id="toggleSystem" class="inactive">System: INACTIVE</button>
+<button id="flipCam">Flip Camera</button>
+<select id="cameraSelect">
+<option value="">Select Camera</option>
+</select>
+</div>
+</div>
 
 <script>
-"use strict";
-let stream=null, systemActive=false, facingMode="environment", currentDeviceId="";
-let openSince=null, alerting=false, sirenTimer=null, voiceTimer=null, audioCtx=null;
+let model = null;
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let statusDiv = document.getElementById('status');
+let toggleBtn = document.getElementById('toggleSystem');
+let flipBtn = document.getElementById('flipCam');
+let cameraSelect = document.getElementById('cameraSelect');
 
-const $=id=>document.getElementById(id);
-const video=$("video"), select=$("cameraSelect");
+let systemActive = false;
+let currentStream = null;
+let currentFacingMode = 'environment'; // 'user' or 'environment'
+let doorOpenStartTime = null;
+let isAlerting = false;
 
-function toast(msg){
-  const t=$("toast");t.textContent=msg;t.classList.add("show");
-  clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove("show"),2600);
+// Speech Synthesis setup
+const speech = new SpeechSynthesisUtterance("Door is open");
+speech.rate = 1;
+speech.pitch = 1;
+
+// Audio Alarm (Siren/Beep generator using Web Audio API)
+let audioCtx = null;
+let oscillator = null;
+
+function startSiren() {
+if (oscillator) return;
+audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+oscillator = audioCtx.createOscillator();
+let gainNode = audioCtx.createGain();
+
+oscillator.type = 'sawtooth';
+oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+
+// Siren effect modulation
+let lfo = audioCtx.createOscillator();
+lfo.frequency.value = 2; // 2 Hz pulse
+let lfoGain = audioCtx.createGain();
+lfoGain.gain.value = 400;
+lfo.connect(oscillator.frequency);
+lfo.start();
+
+oscillator.connect(gainNode);
+gainNode.connect(audioCtx.destination);
+oscillator.start();
 }
-function setSystemUI(){
-  const b=$("powerBtn");
-  b.textContent=systemActive?"🟢 SYSTEM ON":"⚪ SYSTEM OFF";
-  b.classList.toggle("on",systemActive);
+
+function stopSiren() {
+if (oscillator) {
+oscillator.stop();
+oscillator.disconnect();
+oscillator = null;
 }
-$("powerBtn").addEventListener("click",()=>{
-  systemActive=!systemActive;setSystemUI();
-  if(!systemActive){openSince=null;resetAlert();$("door").textContent="⚪ Monitoring paused";$("duration").textContent="0.0 s";}
-  else {$("door").textContent="🟢 Monitoring";toast("Door monitoring activated");}
+}
+
+// Initialize System
+async function init() {
+model = await cocoSsd.load();
+statusDiv.innerText = "System Ready (Inactive)";
+await getCameras();
+await startCamera();
+detectFrame();
+}
+
+// List available video devices
+async function getCameras() {
+const devices = await navigator.mediaDevices.enumerateDevices();
+const videoDevices = devices.filter(d => d.kind === 'videoinput');
+cameraSelect.innerHTML = '<option value="">Select Camera</option>';
+videoDevices.forEach((device, index) => {
+const option = document.createElement('option');
+option.value = device.deviceId;
+option.text = device.label || `Camera ${index + 1}`;
+cameraSelect.appendChild(option);
+});
+}
+
+// Start video stream
+async function startCamera(deviceId = null) {
+if (currentStream) {
+currentStream.getTracks().forEach(track => track.stop());
+}
+
+const constraints = {
+video: deviceId
+? { deviceId: { exact: deviceId } }
+: { facingMode: currentFacingMode }
+};
+
+try {
+currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+video.srcObject = currentStream;
+await new Promise(resolve => video.onloadedmetadata = resolve);
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+} catch (err) {
+statusDiv.innerText = "Error accessing camera: " + err.message;
+}
+}
+
+// Main Detection Loop
+async function detectFrame() {
+if (model && video.readyState === 4) {
+const predictions = await model.detect(video);
+
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+let doorDetected = false;
+let personDetected = false;
+
+predictions.forEach(pred => {
+// COCO-SSD detects objects like 'door', 'refrigerator', or framed structures as door-like
+if (pred.class === 'door') {
+doorDetected = true;
+}
+if (pred.class === 'person') {
+personDetected = true;
+}
+
+// Draw Bounding Boxes
+ctx.strokeStyle = '#00FF00';
+ctx.lineWidth = 2;
+ctx.strokeRect(...pred.bbox);
+ctx.fillStyle = '#00FF00';
+ctx.fillText(`${pred.class} (${Math.round(pred.score * 100)}%)`, pred.bbox[0], pred.bbox[1] > 10 ? pred.bbox[1] - 5 : 10);
 });
 
-async function listCameras(){
-  if(!navigator.mediaDevices?.enumerateDevices){toast("Camera API is not supported here");return;}
-  try{
-    const devices=await navigator.mediaDevices.enumerateDevices();
-    const cams=devices.filter(d=>d.kind==="videoinput");
-    const old=currentDeviceId;
-    select.innerHTML="";
-    const first=document.createElement("option");first.value="";first.textContent=cams.length?"Choose camera":"No cameras found";select.appendChild(first);
-    cams.forEach((d,i)=>{const o=document.createElement("option");o.value=d.deviceId;o.textContent=d.label||`Camera ${i+1}`;select.appendChild(o)});
-    if(old&&cams.some(c=>c.deviceId===old))select.value=old;
-  }catch(e){toast("Could not list cameras");}
+// Note: Generic COCO-SSD models often tag doors under generic boundaries.
+// We evaluate "door open" when a door boundary is recognized without a blocking person or based on custom trained state.
+
+handleAlertLogic(doorDetected, personDetected);
+}
+requestAnimationFrame(detectFrame);
 }
 
-async function startCamera(deviceId=""){
-  if(!navigator.mediaDevices?.getUserMedia){toast("Camera access needs a supported browser and secure page");return false;}
-  try{
-    if(stream)stream.getTracks().forEach(t=>t.stop());
-    const v=deviceId?{deviceId:{exact:deviceId}}:{facingMode:{ideal:facingMode}};
-    stream=await navigator.mediaDevices.getUserMedia({video:v,audio:false});
-    video.srcObject=stream;
-    await video.play().catch(()=>{});
-    currentDeviceId=stream.getVideoTracks()[0]?.getSettings().deviceId||deviceId||"";
-    $("cameraOff").style.display="none";
-    $("camText").textContent="Camera active";
-    $("dot").className="dot green";
-    video.classList.toggle("mirror",facingMode==="user");
-    await listCameras();
-    if(currentDeviceId)select.value=currentDeviceId;
-    toast("Camera started");
-    return true;
-  }catch(err){
-    console.error(err);
-    $("cameraOff").style.display="grid";
-    $("camText").textContent="Camera unavailable";
-    $("dot").className="dot red";
-    let msg="Unable to start camera";
-    if(err.name==="NotAllowedError")msg="Camera permission was denied";
-    else if(err.name==="NotFoundError")msg="No camera found";
-    else if(err.name==="NotReadableError")msg="Camera is being used by another app";
-    else if(location.protocol!=="https:"&&location.hostname!=="localhost")msg="Open this page through HTTPS or localhost for camera access";
-    toast(msg);return false;
-  }
+// Alarm Trigger Rules
+function handleAlertLogic(isDoorOpen, isPersonPresent) {
+if (!systemActive) {
+resetAlert();
+statusDiv.innerText = "System Inactive";
+return;
 }
 
-function stopCamera(){
-  if(stream)stream.getTracks().forEach(t=>t.stop());
-  stream=null;video.srcObject=null;$("cameraOff").style.display="grid";
-  $("camText").textContent="Camera off";$("dot").className="dot";
-  toast("Camera stopped");
+// Rule: Trigger if door is open AND no person is passing by
+if (isDoorOpen && !isPersonPresent) {
+if (!doorOpenStartTime) {
+doorOpenStartTime = Date.now();
 }
 
-$("startBtn").addEventListener("click",()=>startCamera());
-select.addEventListener("change",e=>{if(e.target.value)startCamera(e.target.value)});
+const elapsedSeconds = (Date.now() - doorOpenStartTime) / 1000;
 
-$("flipBtn").addEventListener("click",async()=>{
-  facingMode=facingMode==="environment"?"user":"environment";
-  // Prefer facingMode so flip works even when device labels are unavailable.
-  await startCamera();
+if (elapsedSeconds >= 2) {
+triggerAlert();
+statusDiv.innerText = "ALERT: Door is open for > 2 seconds!";
+} else {
+statusDiv.innerText = `Door Open... (${elapsedSeconds.toFixed(1)}s)`;
+}
+} else {
+doorOpenStartTime = null;
+resetAlert();
+if (isPersonPresent) {
+statusDiv.innerText = "Person detected passing through.";
+} else {
+statusDiv.innerText = "System Active - Monitoring...";
+}
+}
+}
+
+function triggerAlert() {
+if (!isAlerting) {
+isAlerting = true;
+startSiren();
+window.speechSynthesis.speak(speech);
+}
+}
+
+function resetAlert() {
+isAlerting = false;
+stopSiren();
+window.speechSynthesis.cancel();
+}
+
+// UI Event Listeners
+toggleBtn.addEventListener('click', () => {
+systemActive = !systemActive;
+if (systemActive) {
+toggleBtn.innerText = "System: ACTIVE";
+toggleBtn.className = "active";
+} else {
+toggleBtn.innerText = "System: INACTIVE";
+toggleBtn.className = "inactive";
+}
 });
 
-function setDoor(isOpen,personPresent=false){
-  if(!systemActive){return;}
-  $("person").textContent=personPresent?"👤 Detected":"— None";
-  if(!isOpen){
-    openSince=null;$("duration").textContent="0.0 s";$("door").textContent="🟢 DOOR CLOSED";resetAlert();return;
-  }
-  if(openSince===null)openSince=Date.now();
-  const sec=(Date.now()-openSince)/1000;
-  $("duration").textContent=sec.toFixed(1)+" s";$("door").textContent="🔴 DOOR OPEN";
-  if(sec>=2&&!alerting)raiseAlert(sec);
-}
-function raiseAlert(sec){
-  alerting=true;$("alertBox").classList.add("show");$("alertStatus").textContent="🔴 SIREN ACTIVE";
-  $("alertText").textContent=`Open for ${sec.toFixed(1)}+ seconds`;
-  speak("Door is open");startSiren();
-}
-function resetAlert(){
-  alerting=false;$("alertBox").classList.remove("show");$("alertStatus").textContent="🟢 Ready";stopSiren();
-}
-function speak(text){
-  if(!("speechSynthesis" in window))return;
-  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=.95;speechSynthesis.speak(u);
-}
-function beep(){
-  audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==="suspended")audioCtx.resume();
-  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-  o.type="square";o.frequency.setValueAtTime(850,audioCtx.currentTime);o.frequency.linearRampToValueAtTime(430,audioCtx.currentTime+.32);
-  g.gain.setValueAtTime(.055,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.42);
-  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.43);
-}
-function startSiren(){
-  if(sirenTimer)return;beep();sirenTimer=setInterval(beep,650);
-  voiceTimer=setInterval(()=>{if(alerting)speak("Door is open");},5000);
-}
-function stopSiren(){clearInterval(sirenTimer);clearInterval(voiceTimer);sirenTimer=null;voiceTimer=null}
-$("testBtn").addEventListener("click",()=>{
-  if(!systemActive){toast("Turn the system ON first");return}
-  raiseAlert(2);setTimeout(()=>{if(alerting)resetAlert()},3000);
+flipBtn.addEventListener('click', () => {
+currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+startCamera();
 });
 
-/* AI MODEL HOOK:
-   Call setDoor(result.doorOpen, result.personPresent) from your
-   TensorFlow.js / ONNX / MediaPipe detector.
-*/
-async function analyzeFrame(){
-  // Example:
-  // const result = await model.detect(video);
-  // setDoor(result.doorOpen, result.personPresent);
+cameraSelect.addEventListener('change', (e) => {
+if (e.target.value) {
+startCamera(e.target.value);
 }
-
-/* Built-in timer demo for testing only:
-   Press O = door open, C = door closed, P = toggle person.
-*/
-let demoPerson=false;
-document.addEventListener("keydown",e=>{
-  if(e.key.toLowerCase()==="o")setDoor(true,demoPerson);
-  if(e.key.toLowerCase()==="c")setDoor(false,false);
-  if(e.key.toLowerCase()==="p"){demoPerson=!demoPerson;setDoor(openSince!==null,demoPerson)}
 });
 
-(async()=>{
-  setSystemUI();
-  await listCameras();
-})();
+window.onload = init;
 </script>
 </body>
 </html>

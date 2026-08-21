@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Time Door Open Alarm</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 15px;
+      margin: 0;
+      min-height: 100vh;
+    }
+    h2 { 
+      margin: 10px 0 15px; 
+      font-size: 1.6rem; 
+      text-align: center; 
+      color: #38bdf8;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+    .status-bar {
+      width: 100%;
+      max-width: 600px;
+      padding: 14px 18px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+    }
+    .status-bar.alert { 
+      background: #991b1b; 
+      border-color: #ef4444;
+      color: #ffffff;
+      animation: flash 0.4s infinite alternate; 
+    }
+    @keyframes flash { 
+      from { opacity: 1; transform: scale(1); } 
+      to { opacity: 0.85; transform: scale(0.998); } 
+    }
+    
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      aspect-ratio: 4 / 3;
+      background: #020617;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #334155;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    video, canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      width: 100%;
+      max-width: 600px;
+      margin-top: 20px;
+    }
+    button, select {
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: #1e293b;
+      color: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    button:hover, select:hover {
+      background: #334155;
+    }
+    button.active { 
+      background: #15803d; 
+      border-color: #22c55e;
+      color: #ffffff;
+    }
+    button.active:hover {
+      background: #166534;
+    }
+    button.inactive { 
+      background: #b91c1c; 
+      border-color: #ef4444;
+      color: #ffffff;
+    }
+    button.inactive:hover {
+      background: #991b1b;
+    }
+    .sensitivity-box {
+      margin-top: 15px;
+      background: #1e293b;
+      padding: 12px 18px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 600px;
+    }
+    input[type=range] {
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🚨 Real-Time Door Alarm Monitor</h2>
+  <div id="status" class="status-bar">System Initializing...</div>
+
+  <div class="video-wrapper">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div class="sensitivity-box">
+    <label for="threshold">Sensitivity:</label>
+    <input type="range" id="threshold" min="5" max="50" value="15">
+    <button id="calibrateBtn" style="padding: 6px 12px; font-size: 0.85rem;">Reset Baseline (Closed Door)</button>
+  </div>
+
+  <div class="btn-group">
+    <button id="toggleBtn" class="inactive">System: INACTIVE</button>
+    <button id="flipBtn">Flip Camera</button>
+    <select id="cameraSelect"><option value="">Select Camera</option></select>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const statusDiv = document.getElementById('status');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const flipBtn = document.getElementById('flipBtn');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const thresholdInput = document.getElementById('threshold');
+    const calibrateBtn = document.getElementById('calibrateBtn');
+
+    let systemActive = false;
+    let currentStream = null;
+    let facingMode = 'environment';
+    let baselineFrame = null;
+    let doorOpenStartTime = null;
+    let isAlerting = false;
+    
+    // Audio Context Setup for Loud Siren
+    let audioCtx = null;
+    let osc1 = null, osc2 = null, sirenInterval = null;
+
+    function initLoudAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function startLoudSiren() {
+      if (isAlerting) return;
+      isAlerting = true;
+      initLoudAudio();
+
+      osc1 = audioCtx.createOscillator();
+      osc2 = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      osc1.type = 'square'; // Piercing high-volume tone
+      osc2.type = 'sawtooth';
+
+      gainNode.gain.setValueAtTime(1.0, audioCtx.currentTime); // Max Volume
+
+      osc1.connect(gainNode);
+      osc2.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      let high = false;
+      osc1.start();
+      osc2.start();
+
+      sirenInterval = setInterval(() => {
+        const freq1 = high ? 950 : 650;
+        const freq2 = high ? 1200 : 800;
+        osc1.frequency.setValueAtTime(freq1, audioCtx.currentTime);
+        osc2.frequency.setValueAtTime(freq2, audioCtx.currentTime);
+        high = !high;
+      }, 250);
+
+      speakAlert();
+    }
+
+    function stopSiren() {
+      if (!isAlerting) return;
+      isAlerting = false;
+      if (sirenInterval) clearInterval(sirenInterval);
+      if (osc1) { osc1.stop(); osc1.disconnect(); osc1 = null; }
+      if (osc2) { osc2.stop(); osc2.disconnect(); osc2 = null; }
+      window.speechSynthesis.cancel();
+    }
+
+    function speakAlert() {
+      const speech = new SpeechSynthesisUtterance("Door is open! Door is open!");
+      speech.volume = 1.0;
+      speech.rate = 1.1;
+      speech.pitch = 1.2;
+      window.speechSynthesis.speak(speech);
+    }
+
+    // Camera Management
+    async function getCameras() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      cameraSelect.innerHTML = '<option value="">Select Camera</option>';
+      videoDevices.forEach((device, index) => {
+        const opt = document.createElement('option');
+        opt.value = device.deviceId;
+        opt.text = device.label || `Camera ${index + 1}`;
+        cameraSelect.appendChild(opt);
+      });
+    }
+
+    async function startCamera(deviceId = null) {
+      if (currentStream) {
+        currentStream.getTracks().forEach(t => t.stop());
+      }
+      const constraints = {
+        video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: facingMode }
+      };
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = currentStream;
+        await new Promise(r => video.onloadedmetadata = r);
+        canvas.width = 160; // High speed processing frame
+        canvas.height = 120;
+        statusDiv.innerText = "System Ready (Inactive)";
+        captureBaseline();
+      } catch (e) {
+        statusDiv.innerText = "Camera Error: " + e.message;
+      }
+    }
+
+    function captureBaseline() {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      baselineFrame = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      statusDiv.innerText = systemActive ? "System Active - Monitoring..." : "Baseline Captured. System Inactive.";
+    }
+
+    // High-Speed Frame Analysis
+    function processFrame() {
+      if (video.readyState === 4) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const currentFrame = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+        if (systemActive && baselineFrame) {
+          let changedPixels = 0;
+          const threshold = parseInt(thresholdInput.value, 10);
+          const totalPixels = currentFrame.length / 4;
+
+          for (let i = 0; i < currentFrame.length; i += 4) {
+            const diffR = Math.abs(currentFrame[i] - baselineFrame[i]);
+            const diffG = Math.abs(currentFrame[i+1] - baselineFrame[i+1]);
+            const diffB = Math.abs(currentFrame[i+2] - baselineFrame[i+2]);
+            
+            if ((diffR + diffG + diffB) / 3 > threshold) {
+              changedPixels++;
+            }
+          }
+
+          const percentChanged = (changedPixels / totalPixels) * 100;
+
+          // If more than 3% visual deviation occurs (door opens even slightly)
+          if (percentChanged > 3.0) {
+            if (!doorOpenStartTime) doorOpenStartTime = Date.now();
+            const elapsed = (Date.now() - doorOpenStartTime) / 1000;
+
+            if (elapsed >= 2.0) {
+              startLoudSiren();
+              statusDiv.innerText = `🚨 LOUD ALERT: Door Open for ${elapsed.toFixed(1)}s!`;
+              statusDiv.className = "status-bar alert";
+            } else {
+              statusDiv.innerText = `Door movement detected... (${elapsed.toFixed(1)}s)`;
+              statusDiv.className = "status-bar";
+            }
+          } else {
+            doorOpenStartTime = null;
+            stopSiren();
+            statusDiv.innerText = "System Active - Monitoring Door State";
+            statusDiv.className = "status-bar";
+          }
+        }
+      }
+      requestAnimationFrame(processFrame);
+    }
+
+    // Controls
+    toggleBtn.addEventListener('click', () => {
+      initLoudAudio();
+      systemActive = !systemActive;
+      if (systemActive) {
+        captureBaseline();
+        toggleBtn.innerText = "System: ACTIVE";
+        toggleBtn.className = "active";
+      } else {
+        stopSiren();
+        toggleBtn.innerText = "System: INACTIVE";
+        toggleBtn.className = "inactive";
+        statusDiv.innerText = "System Inactive";
+        statusDiv.className = "status-bar";
+      }
+    });
+
+    calibrateBtn.addEventListener('click', captureBaseline);
+    flipBtn.addEventListener('click', () => {
+      facingMode = facingMode === 'user' ? 'environment' : 'user';
+      startCamera();
+    });
+    cameraSelect.addEventListener('change', (e) => {
+      if (e.target.value) startCamera(e.target.value);
+    });
+
+    window.onload = async () => {
+      await getCameras();
+      await startCamera();
+      requestAnimationFrame(processFrame);
+    };
+  </script>
+</body>
+</html>
